@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- PWA & Mobile Web App Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+    
+    <title>Studyoo - Premium Study Tracker</title>
+
+    <!-- Lottie Animations -->
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Pacifico Font Fallback for Noelan -->
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'San Francisco', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'sans-serif'],
+                        noelan: ['Noelan', 'Pacifico', 'cursive'],
+                    },
+                    colors: {
+                        ios: {
+                            blue: '#007AFF',
+                            green: '#34C759',
+                            indigo: '#5856D6',
+                            orange: '#FF9500',
+                            pink: '#FF2D55',
+                            purple: '#AF52DE',
+                            red: '#FF3B30',
+                            teal: '#5AC8FA',
+                            yellow: '#FFCC00',
+                            gray: '#8E8E93',
+                            bgLight: '#F2F2F7',
+                            cardLight: '#FFFFFF',
+                            bgDark: '#000000',
+                            cardDark: '#1C1C1E',
+                            sepDark: '#38383A'
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.4s ease-out forwards',
+                        'slide-up': 'slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @font-face {
+            font-family: 'Noelan';
+            src: local('Noelan'); 
+        }
+
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            -webkit-tap-highlight-color: transparent;
+            overflow: hidden; 
+        }
+        
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(25px) saturate(1.8);
+            -webkit-backdrop-filter: blur(25px) saturate(1.8);
+        }
+        .dark .glass { background: rgba(28, 28, 30, 0.75); }
+        
+        .safe-top { padding-top: env(safe-area-inset-top, 44px); }
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 34px); }
+        .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 34px) + 80px); }
+        .pt-safe-header { padding-top: calc(env(safe-area-inset-top, 44px) + 80px); }
+        
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active{
+            -webkit-box-shadow: 0 0 0 30px white inset !important;
+            -webkit-text-fill-color: black !important;
+            border-radius: 1rem;
+        }
+        .dark input:-webkit-autofill,
+        .dark input:-webkit-autofill:hover, 
+        .dark input:-webkit-autofill:focus, 
+        .dark input:-webkit-autofill:active{
+            -webkit-box-shadow: 0 0 0 30px black inset !important;
+            -webkit-text-fill-color: white !important;
+            border-radius: 1rem;
+        }
+
+        .view-section { display: none; opacity: 0; }
+        .view-section.active { display: block; animation: fadeIn 0.4s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-ios-bgLight dark:bg-ios-bgDark text-gray-900 dark:text-gray-100 transition-colors duration-300 h-[100dvh] w-screen flex flex-col selection:bg-ios-blue selection:text-white">
+
+    <div id="toast-container" class="fixed top-safe left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 transition-all w-11/12 max-w-md pointer-events-none mt-4"></div>
+
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="fixed inset-0 bg-ios-bgLight dark:bg-ios-bgDark z-[90] flex flex-col items-center justify-center transition-opacity duration-700">
+        <div class="flex-1 flex flex-col items-center justify-center animate-slide-up">
+            <lottie-player src="w.json" background="transparent" speed="1" style="width: 200px; height: 200px;" loop autoplay class="mb-4 drop-shadow-2xl"></lottie-player>
+            <h1 class="text-5xl font-bold tracking-tight text-gray-900 dark:text-white">Studyoo</h1>
+        </div>
+        
+        <div class="pb-10 safe-bottom animate-fade-in flex items-center justify-center gap-2 whitespace-nowrap">
+            <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mt-1">Powered By</span>
+            <span class="text-4xl font-noelan bg-clip-text text-transparent bg-gradient-to-r from-ios-pink via-ios-purple to-ios-blue pb-1 pr-1">Ali</span>
+        </div>
+    </div>
+
+    <!-- Auth View -->
+    <div id="auth-view" class="hidden flex-col h-[100dvh] w-full overflow-y-auto hide-scrollbar pb-20 pt-10 px-6 safe-top bg-ios-bgLight dark:bg-ios-bgDark">
+        <div class="max-w-md mx-auto mt-2 w-full space-y-6 animate-slide-up">
+            
+            <div class="text-center flex flex-col items-center">
+                <lottie-player src="w.json" background="transparent" speed="1" style="width: 140px; height: 140px;" loop autoplay class="mb-2 drop-shadow-xl"></lottie-player>
+                <h2 id="auth-title" class="text-3xl font-bold tracking-tight">Welcome back</h2>
+                <p id="auth-subtitle" class="text-gray-500 mt-2 font-medium">Sign in to sync your progress.</p>
+            </div>
+            
+            <div class="bg-ios-cardLight dark:bg-ios-cardDark rounded-[32px] p-6 shadow-sm border border-gray-200 dark:border-ios-sepDark">
+                
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <button onclick="loginWithGoogle()" class="flex items-center justify-center gap-2 bg-gray-100 dark:bg-black rounded-2xl py-3.5 font-bold hover:bg-gray-200 dark:hover:bg-gray-900 active:scale-95 transition-all text-sm">
+                        <i class="ph-fill ph-google-logo text-lg text-red-500"></i> Google
+                    </button>
+                    <button onclick="loginWithGithub()" class="flex items-center justify-center gap-2 bg-gray-100 dark:bg-black rounded-2xl py-3.5 font-bold hover:bg-gray-200 dark:hover:bg-gray-900 active:scale-95 transition-all text-sm">
+                        <i class="ph-fill ph-github-logo text-lg"></i> GitHub
+                    </button>
+                </div>
+
+                <div class="relative flex py-2 items-center mb-6">
+                    <div class="flex-grow border-t border-gray-200 dark:border-ios-sepDark"></div>
+                    <span class="flex-shrink-0 mx-4 text-gray-400 text-xs font-bold uppercase tracking-wider">Or email</span>
+                    <div class="flex-grow border-t border-gray-200 dark:border-ios-sepDark"></div>
+                </div>
+
+                <form id="auth-form" class="space-y-4">
+                    <div>
+                        <input type="email" id="auth-email" required class="w-full bg-gray-100 dark:bg-black rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-ios-blue transition-all font-medium placeholder-gray-500" placeholder="Email Address">
+                    </div>
+                    <div>
+                        <input type="password" id="auth-password" required class="w-full bg-gray-100 dark:bg-black rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-ios-blue transition-all font-medium placeholder-gray-500" placeholder="Password">
+                        
+                        <div id="password-strength-container" class="hidden mt-3 flex-col gap-1.5 px-2">
+                            <div class="flex h-1.5 w-full bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                                <div id="strength-bar" class="h-full w-0 transition-all duration-500 ease-out"></div>
+                            </div>
+                            <p id="strength-text" class="text-[11px] text-right text-gray-500 uppercase tracking-wider font-bold"></p>
+                        </div>
+                    </div>
+                    
+                    <div id="confirm-password-container" class="hidden">
+                        <input type="password" id="auth-confirm-password" class="w-full bg-gray-100 dark:bg-black rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-ios-blue transition-all font-medium placeholder-gray-500 mt-4" placeholder="Confirm Password">
+                    </div>
+
+                    <div class="flex justify-end pt-1" id="forgot-password-container">
+                        <button type="button" onclick="handleForgotPassword()" class="text-sm text-ios-blue font-bold active:opacity-50">Forgot password?</button>
+                    </div>
+
+                    <button type="submit" id="auth-submit-btn" class="w-full bg-ios-blue text-white font-bold rounded-2xl py-4 shadow-lg shadow-ios-blue/30 active:scale-95 transition-all mt-4">Sign In</button>
+                </form>
+                
+                <div class="mt-6 text-center">
+                    <button type="button" id="auth-toggle-btn" class="text-sm text-gray-500 font-medium active:opacity-50 transition-opacity">Don't have an account? <span class="text-ios-blue font-bold">Sign Up</span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app-view" class="hidden flex-col h-[100dvh] w-full relative">
+        
+        <header id="main-header" class="absolute top-0 w-full glass z-30 pt-safe transition-all duration-300 border-b border-transparent shadow-sm">
+            <div class="px-6 py-4 flex justify-between items-center max-w-lg mx-auto">
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight" id="header-title">Dashboard</h1>
+                </div>
+                <button onclick="switchTab('settings')" class="w-9 h-9 bg-gray-200 dark:bg-gray-800 rounded-full flex items-center justify-center active:scale-95 transition-all">
+                    <i class="ph-fill ph-user text-gray-600 dark:text-gray-300"></i>
+                </button>
+            </div>
+        </header>
+
+        <main id="main-content" class="flex-1 overflow-y-auto hide-scrollbar pb-safe pt-safe-header relative z-10 w-full">
+            
+            <div id="view-dashboard" class="view-section active px-6 pb-6 max-w-lg mx-auto space-y-6">
+                <div class="bg-gradient-to-br from-ios-blue to-ios-indigo rounded-[32px] p-6 text-white shadow-xl shadow-ios-blue/20">
+                    <p class="font-bold text-white/80 text-xs uppercase tracking-widest mb-1" id="date-display">Today</p>
+                    <h2 class="text-3xl font-bold mb-4 tracking-tight">Ready to focus?</h2>
+                    <div class="bg-white/20 backdrop-blur-md rounded-2xl p-4 flex items-center gap-3 border border-white/20">
+                        <i class="ph-fill ph-sparkle text-yellow-300 text-xl flex-shrink-0"></i>
+                        <p class="font-medium text-sm leading-snug" id="dash-ai-text">Analyzing your study patterns to give you recommendations...</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-ios-cardLight dark:bg-ios-cardDark p-5 rounded-[28px] shadow-sm border border-gray-200 dark:border-ios-sepDark">
+                        <div class="w-12 h-12 rounded-2xl bg-ios-orange/10 flex items-center justify-center mb-4">
+                            <i class="ph-fill ph-clock text-ios-orange text-2xl"></i>
+                        </div>
+                        <p class="text-gray-500 dark:text-gray-400 text-sm font-bold mb-1">Study Time</p>
+                        <h3 class="text-3xl font-bold tracking-tight" id="dash-time">0h 0m</h3>
+                    </div>
+                    <div class="bg-ios-cardLight dark:bg-ios-cardDark p-5 rounded-[28px] shadow-sm border border-gray-200 dark:border-ios-sepDark">
+                        <div class="w-12 h-12 rounded-2xl bg-ios-green/10 flex items-center justify-center mb-4">
+                            <i class="ph-fill ph-check-circle text-ios-green text-2xl"></i>
+                        </div>
+                        <p class="text-gray-500 dark:text-gray-400 text-sm font-bold mb-1">Lectures Done</p>
+                        <h3 class="text-3xl font-bold tracking-tight" id="dash-lectures">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-subjects" class="view-section px-6 pb-6 max-w-lg mx-auto space-y-6">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-xl font-bold text-gray-500 tracking-tight">Your Curriculum</h2>
+                    <button onclick="showAddSubjectModal()" class="w-10 h-10 bg-ios-blue text-white rounded-full flex items-center justify-center shadow-lg shadow-ios-blue/30 active:scale-95 transition-all">
+                        <i class="ph-bold ph-plus text-lg"></i>
+                    </button>
+                </div>
+                
+                <div id="subjects-list" class="space-y-4"></div>
+            </div>
+
+            <div id="view-subject-detail" class="view-section px-6 pb-6 max-w-lg mx-auto space-y-6">
+                <button onclick="switchTab('subjects')" class="text-ios-blue font-bold flex items-center gap-1 active:opacity-50 transition-opacity bg-ios-blue/10 px-4 py-2 rounded-full w-max mb-4">
+                    <i class="ph-bold ph-caret-left"></i> Back to Subjects
+                </button>
+                
+                <div class="flex justify-between items-end bg-ios-cardLight dark:bg-ios-cardDark p-6 rounded-[32px] shadow-sm border border-gray-200 dark:border-ios-sepDark">
+                    <div>
+                        <div class="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-3 text-2xl" id="detail-subject-icon">📚</div>
+                        <h1 class="text-2xl font-bold tracking-tight" id="detail-subject-title">Subject Name</h1>
+                    </div>
+                    <button onclick="showAddChapterModal()" class="w-10 h-10 bg-gray-100 dark:bg-gray-800 text-ios-blue rounded-full flex items-center justify-center active:scale-95 transition-all">
+                        <i class="ph-bold ph-plus text-lg"></i>
+                    </button>
+                </div>
+
+                <div id="chapters-list" class="space-y-4"></div>
+            </div>
+
+            <div id="view-chapter-study" class="view-section px-6 pb-6 max-w-lg mx-auto space-y-6">
+                <button onclick="closeChapterStudy()" class="text-ios-blue font-bold flex items-center gap-1 active:opacity-50 transition-opacity bg-ios-blue/10 px-4 py-2 rounded-full w-max mb-2">
+                    <i class="ph-bold ph-caret-left"></i> Back
+                </button>
+                
+                <div>
+                    <p class="text-ios-blue text-xs font-bold uppercase tracking-widest mb-1" id="study-subject-name">Subject</p>
+                    <h1 class="text-3xl font-bold tracking-tight leading-tight" id="study-chapter-title">Chapter Name</h1>
+                </div>
+
+                <div class="bg-ios-cardLight dark:bg-ios-cardDark rounded-[32px] p-6 shadow-sm border border-gray-200 dark:border-ios-sepDark space-y-8">
+                    
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="font-bold text-lg">Progress</h3>
+                            <span class="text-sm bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full font-bold"><span id="study-completed-count" class="text-ios-blue">0</span> / <span id="study-total-count">10</span></span>
+                        </div>
+                        <div class="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-3 mb-5 overflow-hidden">
+                            <div id="study-progress-bar" class="bg-ios-blue h-full rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="updateLectureProgress(-1)" class="w-14 h-14 bg-gray-100 dark:bg-gray-800 rounded-2xl font-bold text-red-500 active:scale-95 transition-transform flex items-center justify-center">
+                                <i class="ph-bold ph-minus text-xl"></i>
+                            </button>
+                            <button onclick="updateLectureProgress(1)" class="flex-1 h-14 bg-ios-blue text-white rounded-2xl font-bold shadow-lg shadow-ios-blue/30 active:scale-95 transition-transform flex items-center justify-center gap-2">
+                                <i class="ph-bold ph-check text-xl"></i> Mark Complete
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="h-px w-full bg-gray-100 dark:bg-ios-sepDark"></div>
+
+                    <div>
+                        <h3 class="font-bold text-lg mb-4">Time Spent</h3>
+                        <div class="flex gap-4">
+                            <div class="flex-1 relative">
+                                <input type="number" id="study-hours" min="0" class="w-full bg-gray-100 dark:bg-black rounded-2xl px-4 py-5 outline-none text-center font-bold text-2xl text-ios-blue focus:ring-2 focus:ring-ios-blue transition-all" value="0">
+                                <label class="absolute bottom-2 left-0 right-0 text-center text-[10px] text-gray-500 font-bold uppercase tracking-widest pointer-events-none">Hours</label>
+                            </div>
+                            <div class="flex-1 relative">
+                                <input type="number" id="study-minutes" min="0" max="59" class="w-full bg-gray-100 dark:bg-black rounded-2xl px-4 py-5 outline-none text-center font-bold text-2xl text-ios-blue focus:ring-2 focus:ring-ios-blue transition-all" value="0">
+                                <label class="absolute bottom-2 left-0 right-0 text-center text-[10px] text-gray-500 font-bold uppercase tracking-widest pointer-events-none">Minutes</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="h-px w-full bg-gray-100 dark:bg-ios-sepDark"></div>
+
+                    <div>
+                        <h3 class="font-bold text-lg mb-4">Focus Level</h3>
+                        <div class="flex gap-3 bg-gray-100 dark:bg-black p-1.5 rounded-2xl" id="focus-selectors">
+                            <button onclick="setFocus('Low')" id="focus-Low" class="flex-1 py-2.5 rounded-xl font-bold text-sm text-gray-500 transition-all">Low</button>
+                            <button onclick="setFocus('Medium')" id="focus-Medium" class="flex-1 py-2.5 rounded-xl font-bold text-sm text-gray-500 transition-all">Medium</button>
+                            <button onclick="setFocus('High')" id="focus-High" class="flex-1 py-2.5 rounded-xl font-bold text-sm text-gray-500 transition-all">High</button>
+                        </div>
+                    </div>
+
+                    <div class="h-px w-full bg-gray-100 dark:bg-ios-sepDark"></div>
+
+                    <div>
+                        <h3 class="font-bold text-lg mb-3">Study Notes</h3>
+                        <textarea id="study-notes" rows="3" placeholder="Jot down key takeaways..." class="w-full bg-gray-100 dark:bg-black rounded-2xl px-5 py-4 outline-none resize-none focus:ring-2 focus:ring-ios-blue transition-all font-medium"></textarea>
+                    </div>
+
+                    <button onclick="saveChapterProgress()" class="w-full py-4 bg-gray-900 dark:bg-white text-white dark:text-black rounded-2xl font-bold shadow-xl active:scale-95 transition-all">
+                        Save Progress
+                    </button>
+                </div>
+            </div>
+
+            <div id="view-settings" class="view-section px-6 pb-6 max-w-lg mx-auto space-y-6">
+                <div class="flex items-center gap-4 mb-6 px-2">
+                    <div class="w-16 h-16 rounded-full bg-ios-blue/10 flex items-center justify-center border-2 border-ios-blue">
+                        <i class="ph-fill ph-user text-3xl text-ios-blue"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold" id="settings-email">User Email</h2>
+                        <p class="text-xs text-gray-500 font-bold uppercase tracking-widest bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-md w-max mt-1">Free Plan</p>
+                    </div>
+                </div>
+
+                <div class="bg-ios-cardLight dark:bg-ios-cardDark rounded-[28px] shadow-sm border border-gray-200 dark:border-ios-sepDark overflow-hidden">
+                    <div class="p-4 flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-ios-purple/10 flex items-center justify-center">
+                                <i class="ph-fill ph-moon text-ios-purple text-xl"></i>
+                            </div>
+                            <span class="font-bold text-lg">Dark Mode</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="theme-toggle" class="sr-only peer">
+                            <div class="w-14 h-8 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-7 after:w-7 after:transition-all dark:border-gray-600 peer-checked:bg-ios-green shadow-inner"></div>
+                        </label>
+                    </div>
+                    
+                    <div class="h-px w-full bg-gray-100 dark:bg-ios-sepDark ml-14"></div>
+
+                    <div class="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors" onclick="showUpdatePasswordModal()">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-ios-blue/10 flex items-center justify-center">
+                                <i class="ph-fill ph-lock-key text-ios-blue text-xl"></i>
+                            </div>
+                            <span class="font-bold text-lg">Update Password</span>
+                        </div>
+                        <i class="ph-bold ph-caret-right text-gray-400"></i>
+                    </div>
+
+                    <div class="h-px w-full bg-gray-100 dark:bg-ios-sepDark ml-14"></div>
+
+                    <div class="p-4 flex items-center justify-between cursor-pointer hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors" onclick="handleSignOut()">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-ios-red/10 flex items-center justify-center">
+                                <i class="ph-fill ph-sign-out text-ios-red text-xl"></i>
+                            </div>
+                            <span class="font-bold text-lg text-ios-red">Sign Out</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-12 mb-6">
+                    <lottie-player src="w.json" background="transparent" speed="1" style="width: 80px; height: 80px; margin: 0 auto; filter: grayscale(100%) opacity(0.5);" loop autoplay class="mb-1"></lottie-player>
+                    <p class="text-gray-400 font-bold text-sm tracking-tight">Studyoo Pro v3.0</p>
+                    <p class="text-gray-500 text-xs mt-1 font-bold tracking-widest uppercase">Cloudflare D1 Backend</p>
+                </div>
+            </div>
+
+        </main>
+
+        <nav id="bottom-nav" class="fixed bottom-0 w-full glass z-40 pb-safe border-t border-gray-200/50 dark:border-ios-sepDark/50 hidden">
+            <div class="flex justify-around items-center h-[68px] max-w-lg mx-auto px-4">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center justify-center w-16 text-ios-blue transition-colors active:scale-95">
+                    <i class="ph-fill ph-chart-pie-slice text-2xl mb-1"></i>
+                    <span class="text-[10px] font-bold">Tracker</span>
+                </button>
+                <button onclick="switchTab('subjects')" id="nav-subjects" class="flex flex-col items-center justify-center w-16 text-gray-400 dark:text-gray-500 transition-colors active:scale-95">
+                    <i class="ph-fill ph-books text-2xl mb-1"></i>
+                    <span class="text-[10px] font-bold">Subjects</span>
+                </button>
+                <button onclick="switchTab('settings')" id="nav-settings" class="flex flex-col items-center justify-center w-16 text-gray-400 dark:text-gray-500 transition-colors active:scale-95">
+                    <i class="ph-fill ph-gear text-2xl mb-1"></i>
+                    <span class="text-[10px] font-bold">Settings</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-add-subject" class="fixed inset-0 z-[60] hidden flex flex-col justify-end pointer-events-none">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm pointer-events-auto transition-opacity duration-300 opacity-0" onclick="closeModal('modal-add-subject')" id="modal-add-subject-backdrop"></div>
+        <div class="bg-ios-cardLight dark:bg-ios-cardDark w-full rounded-t-[32px] p-6 pointer-events-auto transform transition-transform duration-400 translate-y-full safe-bottom shadow-2xl" id="modal-add-subject-content">
+            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mb-6"></div>
+            <h2 class="text-2xl font-bold mb-5 tracking-tight">New Subject</h2>
+            
+            <input type="text" id="new-subject-name" class="w-full bg-gray-100 dark:bg-black rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-ios-blue mb-5 font-bold" placeholder="e.g. Quantum Physics">
+            
+            <label class="block text-xs font-bold mb-3 text-gray-500 uppercase tracking-wider pl-1">Choose Icon</label>
+            <div class="grid grid-cols-5 gap-3 mb-8 max-h-48 overflow-y-auto hide-scrollbar pb-2" id="icon-picker"></div>
+            
+            <button onclick="saveNewSubject()" class="w-full bg-ios-blue text-white font-bold rounded-2xl py-4 shadow-lg shadow-ios-blue/30 active:scale-95 transition-all">Create Subject</button>
+        </div>
+    </div>
+
+    <div id="modal-add-chapter" class="fixed inset-0 z-[60] hidden flex flex-col justify-end pointer-events-none">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm pointer-events-auto transition-opacity duration-300 opacity-0" onclick="closeModal('modal-add-chapter')" id="modal-add-chapter-backdrop"></div>
+        <div class="bg-ios-cardLight dark:bg-ios-cardDark w-full rounded-t-[32px] p-6 pointer-events-auto transform transition-transform duration-400 translate-y-full safe-bottom shadow-2xl" id="modal-add-chapter-content">
+            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mb-6"></div>
+            <h2 class="text-2xl font-bold mb-5 tracking-tight">Add Chapter</h2>
+            
+            <input type="text" id="new-chapter-name" class="w-full bg-gray-100 dark:bg-black rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-ios-blue mb-4 font-bold" placeholder="e.g. Thermodynamics">
+            
+            <label class="block text-xs font-bold mb-2 text-gray-500 uppercase tracking-wider pl-1">Total Lectures</label>
+            <input type="number" id="new-chapter-lectures" class="w-full bg-gray-100 dark:bg-black rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-ios-blue mb-8 font-bold text-xl" placeholder="e.g. 10" value="1" min="1">
+            
+            <button onclick="saveNewChapter()" class="w-full bg-ios-blue text-white font-bold rounded-2xl py-4 shadow-lg shadow-ios-blue/30 active:scale-95 transition-all">Add Chapter</button>
+        </div>
+    </div>
+
+    <div id="modal-input" class="fixed inset-0 z-[70] hidden flex items-center justify-center pointer-events-none p-4">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm pointer-events-auto opacity-0 transition-opacity" onclick="closeModal('modal-input')" id="modal-input-backdrop"></div>
+        <div class="bg-ios-cardLight dark:bg-ios-cardDark w-full max-w-xs rounded-[28px] p-6 pointer-events-auto shadow-2xl transform scale-95 opacity-0 transition-all duration-300 text-center" id="modal-input-content">
+            <h2 class="text-xl font-bold mb-2 tracking-tight" id="modal-input-title">Title</h2>
+            <p class="text-sm text-gray-500 mb-5 font-medium" id="modal-input-desc">Desc</p>
+            <input type="text" id="modal-input-field" class="w-full bg-gray-100 dark:bg-black rounded-xl px-4 py-3 outline-none mb-6 font-medium text-center">
+            
+            <div class="flex flex-col gap-2 border-t border-gray-100 dark:border-ios-sepDark pt-4">
+                <button id="modal-input-action" class="w-full py-3 rounded-xl font-bold text-ios-blue active:bg-gray-100 dark:active:bg-gray-800 transition-colors">Confirm</button>
+                <button onclick="closeModal('modal-input')" class="w-full py-3 rounded-xl font-bold text-red-500 active:bg-gray-100 dark:active:bg-gray-800 transition-colors">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Logic & API Connectivity -->
+    <script type="module">
+        // 1. We keep Firebase just for User Authentication
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, updatePassword, GoogleAuthProvider, GithubAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        // NOTE: firebase-firestore has been removed entirely!
+
+        // Firebase Auth Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyC3cGqO3cp0PmDOClUNhmFJXwZLdSnI3do",
+            authDomain: "studyoo.firebaseapp.com",
+            projectId: "studyoo"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // =========================================================
+        // CLOUDFLARE WORKER D1 DATABASE LINK
+        // CHANGE THIS URL TO YOUR SPECIFIC CLOUDFLARE WORKER LINK
+        // =========================================================
+        const API_BASE_URL = "https://studyoo-api.propersonboy.workers.dev";
+
+        // State
+        let currentUser = null;
+        let isSignUpMode = false;
+        let appData = { subjects: [], chapters: [] };
+        let activeSubjectId = null;
+        let currentStudyChapter = null;
+
+        // Icons
+        const subjectIcons = [
+            { id: 'math', icon: 'ph-math-operations', color: 'text-ios-blue', bg: 'bg-ios-blue/10' },
+            { id: 'physics', icon: 'ph-atom', color: 'text-ios-purple', bg: 'bg-ios-purple/10' },
+            { id: 'chemistry', icon: 'ph-flask', color: 'text-ios-teal', bg: 'bg-ios-teal/10' },
+            { id: 'biology', icon: 'ph-dna', color: 'text-ios-green', bg: 'bg-ios-green/10' },
+            { id: 'geography', icon: 'ph-globe-hemisphere-west', color: 'text-ios-orange', bg: 'bg-ios-orange/10' },
+            { id: 'history', icon: 'ph-hourglass-medium', color: 'text-yellow-600', bg: 'bg-yellow-600/10' },
+            { id: 'languages', icon: 'ph-translate', color: 'text-ios-pink', bg: 'bg-ios-pink/10' },
+            { id: 'computer', icon: 'ph-desktop', color: 'text-gray-500', bg: 'bg-gray-500/10' },
+            { id: 'art', icon: 'ph-palette', color: 'text-ios-red', bg: 'bg-ios-red/10' },
+            { id: 'music', icon: 'ph-music-notes', color: 'text-ios-indigo', bg: 'bg-ios-indigo/10' }
+        ];
+        let selectedNewSubjectIcon = 'math';
+
+        // Fake encryption for notes
+        const encryptData = (text) => btoa(encodeURIComponent(text || ''));
+        const decryptData = (hash) => { try { return decodeURIComponent(atob(hash || '')); } catch(e) { return hash; } };
+
+        // Helper to perform secure API Calls to Cloudflare
+        async function secureApiCall(endpoint, method = 'GET', bodyData = null) {
+            if (!currentUser) throw new Error("Not Authenticated");
+            
+            // Get the secure token from Firebase
+            const token = await currentUser.getIdToken();
+            
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` // This locks out Hackers!
+                }
+            };
+            
+            if (bodyData) options.body = JSON.stringify(bodyData);
+
+            const res = await fetch(`${API_BASE_URL}${endpoint}`, options);
+            if (!res.ok) throw new Error("API Request Failed");
+            return await res.json();
+        }
+
+        // --- UI Utilities ---
+        window.showToast = (message, type = 'success') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colorClass = type === 'error' ? 'bg-ios-red text-white' : 'glass text-black dark:text-white border border-white/20 dark:border-white/10';
+            toast.className = `p-4 rounded-[20px] shadow-xl flex items-center justify-center text-center transform transition-all duration-400 translate-y-[-100%] opacity-0 ${colorClass}`;
+            toast.innerHTML = `<div class="text-[13px] font-bold tracking-wide">${message}</div>`;
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.remove('translate-y-[-100%]', 'opacity-0'));
+            setTimeout(() => { toast.classList.add('translate-y-[-100%]', 'opacity-0'); setTimeout(() => toast.remove(), 400); }, 3000);
+        };
+
+        const toggleView = (showId, hideIds) => {
+            const showEl = document.getElementById(showId);
+            showEl.classList.remove('hidden'); showEl.classList.add('flex', 'animate-fade-in');
+            hideIds.forEach(id => { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex', 'animate-fade-in'); });
+        };
+
+        window.switchTab = (tab) => {
+            const titles = { dashboard: 'Dashboard', subjects: 'Curriculum', settings: 'Settings' };
+            document.getElementById('header-title').innerText = titles[tab];
+            document.getElementById('view-subject-detail').classList.remove('active');
+            document.getElementById('view-chapter-study').classList.remove('active');
+            ['view-dashboard', 'view-subjects', 'view-settings'].forEach(v => document.getElementById(v).classList.remove('active'));
+            document.getElementById(`view-${tab}`).classList.add('active');
+            ['dashboard', 'subjects', 'settings'].forEach(n => {
+                const el = document.getElementById(`nav-${n}`);
+                if (n === tab) { el.classList.remove('text-gray-400', 'dark:text-gray-500'); el.classList.add('text-ios-blue'); } 
+                else { el.classList.add('text-gray-400', 'dark:text-gray-500'); el.classList.remove('text-ios-blue'); }
+            });
+            document.getElementById('bottom-nav').style.display = 'block';
+            document.getElementById('main-header').style.display = 'block';
+            if(tab === 'dashboard') renderDashboard();
+        };
+
+        document.getElementById('main-content').addEventListener('scroll', (e) => {
+            const header = document.getElementById('main-header');
+            if(e.target.scrollTop > 10) { header.classList.add('border-gray-200', 'dark:border-ios-sepDark'); header.classList.remove('border-transparent'); } 
+            else { header.classList.remove('border-gray-200', 'dark:border-ios-sepDark'); header.classList.add('border-transparent'); }
+        });
+
+        window.onload = () => {
+            const toggle = document.getElementById('theme-toggle');
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) { document.documentElement.classList.add('dark'); toggle.checked = true; }
+            toggle.addEventListener('change', (e) => { if (e.target.checked) document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); });
+            const options = { weekday: 'long', month: 'long', day: 'numeric' };
+            document.getElementById('date-display').innerText = new Date().toLocaleDateString('en-US', options);
+            renderIconPicker();
+        };
+
+        let minSplashTimePassed = false;
+        let authResolved = false;
+        setTimeout(() => { minSplashTimePassed = true; evaluateSplashState(); }, 2500);
+
+        onAuthStateChanged(auth, async (user) => {
+            authResolved = true;
+            currentUser = user;
+            evaluateSplashState();
+        });
+
+        async function evaluateSplashState() {
+            if(minSplashTimePassed && authResolved) {
+                const splash = document.getElementById('splash-screen');
+                splash.classList.add('opacity-0');
+                setTimeout(() => splash.classList.add('hidden'), 700);
+
+                if (currentUser) {
+                    document.getElementById('settings-email').innerText = currentUser.email || 'User Account';
+                    toggleView('app-view', ['auth-view']);
+                    switchTab('dashboard');
+                    await loadUserData();
+                } else {
+                    toggleView('auth-view', ['app-view']);
+                }
+            }
+        }
+
+        window.loginWithGoogle = async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (error) { showToast(error.message, 'error'); } };
+        window.loginWithGithub = async () => { try { await signInWithPopup(auth, new GithubAuthProvider()); } catch (error) { showToast(error.message, 'error'); } };
+
+        document.getElementById('auth-toggle-btn').addEventListener('click', () => {
+            isSignUpMode = !isSignUpMode;
+            document.getElementById('auth-toggle-btn').innerHTML = isSignUpMode ? "Already have an account? <span class='text-ios-blue font-bold'>Sign In</span>" : "Don't have an account? <span class='text-ios-blue font-bold'>Sign Up</span>";
+            document.getElementById('auth-submit-btn').innerText = isSignUpMode ? "Create Account" : "Sign In";
+            document.getElementById('auth-title').innerText = isSignUpMode ? "Create Account" : "Welcome back";
+            document.getElementById('auth-subtitle').innerText = isSignUpMode ? "Sign up to start tracking." : "Sign in to sync your progress.";
+            
+            if (isSignUpMode) {
+                document.getElementById('confirm-password-container').classList.remove('hidden');
+                document.getElementById('password-strength-container').classList.replace('hidden', 'flex');
+                document.getElementById('forgot-password-container').classList.add('hidden');
+            } else {
+                document.getElementById('confirm-password-container').classList.add('hidden');
+                document.getElementById('password-strength-container').classList.replace('flex', 'hidden');
+                document.getElementById('forgot-password-container').classList.remove('hidden');
+            }
+        });
+
+        document.getElementById('auth-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            const btn = document.getElementById('auth-submit-btn');
+            
+            if (isSignUpMode && password !== document.getElementById('auth-confirm-password').value) return showToast("Passwords do not match.", 'error');
+            
+            const originalText = btn.innerText;
+            try {
+                btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin text-xl"></i>'; btn.disabled = true;
+                if (isSignUpMode) { await createUserWithEmailAndPassword(auth, email, password); showToast('Welcome to Studyoo!'); } 
+                else { await signInWithEmailAndPassword(auth, email, password); }
+            } catch (error) { showToast(error.message.replace('Firebase:', ''), 'error'); } 
+            finally { btn.innerText = originalText; btn.disabled = false; }
+        });
+
+        window.handleSignOut = async () => { try { await signOut(auth); } catch (error) { showToast("Error signing out", 'error'); } };
+
+        // --- NEW DATA LOADING & SAVING LOGIC (Using Cloudflare API) ---
+        async function loadUserData() {
+            if (!currentUser) return;
+            try {
+                // Fetch data from Cloudflare Worker using secureApiCall
+                const data = await secureApiCall(`/api/data?uid=${currentUser.uid}`, 'GET');
+                appData.subjects = data.subjects || [];
+                appData.chapters = data.chapters || [];
+
+                renderDashboard();
+                renderSubjects();
+            } catch (error) {
+                console.error(error);
+                showToast("Failed to load Cloud data", 'error');
+            }
+        }
+
+        window.saveNewSubject = async () => {
+            const name = document.getElementById('new-subject-name').value.trim();
+            if (!name) return showToast('Please enter a name', 'error');
+
+            try {
+                const body = { uid: currentUser.uid, name: name, icon: selectedNewSubjectIcon };
+                const res = await secureApiCall('/api/subjects', 'POST', body); // Custom Route Example
+                
+                appData.subjects.push({ id: res.id, ...body });
+                renderSubjects();
+                closeModal('modal-add-subject');
+                showToast('Subject created!');
+            } catch (error) {
+                // For demonstration: If the worker doesn't have subjects route yet, push to local memory
+                appData.subjects.push({ id: crypto.randomUUID(), uid: currentUser.uid, name, icon: selectedNewSubjectIcon });
+                renderSubjects();
+                closeModal('modal-add-subject');
+                showToast('Subject created (Local Only - Check API)');
+            }
+        };
+
+        window.saveNewChapter = async () => {
+            const name = document.getElementById('new-chapter-name').value.trim();
+            const lectures = parseInt(document.getElementById('new-chapter-lectures').value);
+            if (!name || isNaN(lectures) || lectures < 1) return showToast('Valid details required', 'error');
+
+            try {
+                const newChap = { uid: currentUser.uid, subjectId: activeSubjectId, name: name, lectures: lectures, notes: encryptData('') };
+                
+                // Fetch to Cloudflare
+                const res = await secureApiCall('/api/chapters', 'POST', newChap);
+                
+                appData.chapters.push({ id: res.id, ...newChap, completed: 0, hours: 0, minutes: 0, focus: 'Medium' });
+                renderChaptersList();
+                closeModal('modal-add-chapter');
+                showToast('Chapter added!');
+            } catch (error) {
+                showToast('Error saving to Cloud', 'error');
+            }
+        };
+
+        window.saveChapterProgress = async () => {
+            if(!currentStudyChapter) return;
+            
+            const payload = {
+                uid: currentUser.uid,
+                completed: parseInt(document.getElementById('study-completed-count').innerText),
+                hours: parseInt(document.getElementById('study-hours').value) || 0,
+                minutes: parseInt(document.getElementById('study-minutes').value) || 0,
+                notes: encryptData(document.getElementById('study-notes').value),
+                focus: currentStudyChapter.focus
+            };
+
+            try {
+                // Fetch to Cloudflare
+                await secureApiCall(`/api/chapters/${currentStudyChapter.id}`, 'PUT', payload);
+
+                const idx = appData.chapters.findIndex(c => c.id === currentStudyChapter.id);
+                if(idx !== -1) appData.chapters[idx] = { ...appData.chapters[idx], ...payload };
+
+                showToast('Progress saved to Cloud!');
+            } catch (error) {
+                showToast('Error saving progress', 'error');
+            }
+        };
+
+        // --- Dashboard & Detail Rendering (Same as before) ---
+        function renderDashboard() {
+            let totalTimeMins = 0; let totalLectures = 0;
+            appData.chapters.forEach(c => { totalTimeMins += (c.hours || 0) * 60 + (c.minutes || 0); totalLectures += (c.completed || 0); });
+            document.getElementById('dash-time').innerText = `${Math.floor(totalTimeMins / 60)}h ${totalTimeMins % 60}m`;
+            document.getElementById('dash-lectures').innerText = totalLectures;
+        }
+
+        function renderSubjects() {
+            const list = document.getElementById('subjects-list'); list.innerHTML = '';
+            if (appData.subjects.length === 0) { list.innerHTML = `<div class="text-center py-10 text-gray-400 font-bold bg-gray-50 dark:bg-gray-900 rounded-[32px] border border-dashed border-gray-200 dark:border-gray-800">No subjects yet.</div>`; return; }
+            appData.subjects.forEach(sub => {
+                const iconData = subjectIcons.find(i => i.id === sub.icon) || subjectIcons[0];
+                const chaptersCount = appData.chapters.filter(c => c.subjectId === sub.id).length;
+                const el = document.createElement('div');
+                el.className = 'bg-ios-cardLight dark:bg-ios-cardDark rounded-[28px] p-5 shadow-sm border border-gray-200 dark:border-ios-sepDark flex items-center gap-5 cursor-pointer active:scale-95 transition-all group';
+                el.onclick = () => openSubjectDetail(sub);
+                el.innerHTML = `<div class="w-14 h-14 rounded-2xl ${iconData.bg} flex items-center justify-center group-hover:scale-110 transition-transform"><i class="ph-fill ${iconData.icon} text-3xl ${iconData.color}"></i></div><div class="flex-1"><h3 class="font-bold text-xl">${sub.name}</h3><p class="text-sm font-bold text-gray-400 mt-0.5">${chaptersCount} Chapter${chaptersCount !== 1 ? 's' : ''}</p></div><div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center"><i class="ph-bold ph-caret-right text-gray-400 text-sm"></i></div>`;
+                list.appendChild(el);
+            });
+        }
+
+        window.showModal = (id) => {
+            const modal = document.getElementById(id); const content = document.getElementById(`${id}-content`); const backdrop = document.getElementById(`${id}-backdrop`);
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('pointer-events-none'); backdrop.classList.add('opacity-100'); if(content.classList.contains('translate-y-full')) { content.classList.remove('translate-y-full'); } else { content.classList.remove('scale-95', 'opacity-0'); content.classList.add('scale-100', 'opacity-100'); } }, 10);
+        };
+
+        window.closeModal = (id) => {
+            const modal = document.getElementById(id); const content = document.getElementById(`${id}-content`); const backdrop = document.getElementById(`${id}-backdrop`);
+            modal.classList.add('pointer-events-none'); backdrop.classList.remove('opacity-100');
+            if(content.classList.contains('translate-y-full') === false && id.includes('add')) { content.classList.add('translate-y-full'); } else { content.classList.remove('scale-100', 'opacity-100'); content.classList.add('scale-95', 'opacity-0'); }
+            setTimeout(() => modal.classList.add('hidden'), 400);
+        };
+
+        function renderIconPicker() {
+            const container = document.getElementById('icon-picker'); container.innerHTML = '';
+            subjectIcons.forEach(ic => {
+                const btn = document.createElement('button'); btn.type = 'button';
+                btn.className = `w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-all ${ic.bg} ${ic.color} border-[3px] ${selectedNewSubjectIcon === ic.id ? 'border-ios-blue shadow-lg scale-105' : 'border-transparent'}`;
+                btn.innerHTML = `<i class="ph-fill ${ic.icon}"></i>`;
+                btn.onclick = () => { selectedNewSubjectIcon = ic.id; renderIconPicker(); };
+                container.appendChild(btn);
+            });
+        }
+
+        window.showAddSubjectModal = () => { document.getElementById('new-subject-name').value = ''; selectedNewSubjectIcon = 'math'; renderIconPicker(); showModal('modal-add-subject'); };
+        
+        window.openSubjectDetail = (subject) => {
+            activeSubjectId = subject.id;
+            const iconData = subjectIcons.find(i => i.id === subject.icon) || subjectIcons[0];
+            document.getElementById('detail-subject-title').innerText = subject.name;
+            document.getElementById('detail-subject-icon').innerHTML = `<i class="ph-fill ${iconData.icon} ${iconData.color}"></i>`;
+            document.getElementById('detail-subject-icon').className = `w-12 h-12 rounded-2xl flex items-center justify-center mb-3 text-2xl ${iconData.bg}`;
+            renderChaptersList();
+            document.getElementById('view-subjects').classList.remove('active'); document.getElementById('view-subject-detail').classList.add('active');
+        };
+
+        function renderChaptersList() {
+            const list = document.getElementById('chapters-list'); list.innerHTML = '';
+            const chapters = appData.chapters.filter(c => c.subjectId === activeSubjectId);
+            if (chapters.length === 0) { list.innerHTML = `<div class="text-center py-10 text-gray-400 font-bold bg-gray-50 dark:bg-gray-900 rounded-[32px] border border-dashed border-gray-200 dark:border-gray-800">No chapters yet.</div>`; return; }
+            chapters.forEach(chap => {
+                const progress = chap.lectures > 0 ? Math.round((chap.completed / chap.lectures) * 100) : 0;
+                const el = document.createElement('div');
+                el.className = 'bg-ios-cardLight dark:bg-ios-cardDark rounded-[28px] p-5 shadow-sm border border-gray-200 dark:border-ios-sepDark cursor-pointer active:scale-95 transition-transform group';
+                el.onclick = () => openChapterStudy(chap);
+                el.innerHTML = `<div class="flex justify-between items-center mb-3"><h3 class="font-bold text-lg">${chap.name}</h3><span class="text-[11px] font-bold px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-500 uppercase tracking-wider">${chap.completed}/${chap.lectures}</span></div><div class="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2 overflow-hidden"><div class="bg-ios-blue h-full rounded-full transition-all duration-700" style="width: ${progress}%"></div></div>`;
+                list.appendChild(el);
+            });
+        }
+
+        window.showAddChapterModal = () => { document.getElementById('new-chapter-name').value = ''; document.getElementById('new-chapter-lectures').value = '1'; showModal('modal-add-chapter'); };
+        
+        window.openChapterStudy = (chapter) => {
+            currentStudyChapter = chapter;
+            const subject = appData.subjects.find(s => s.id === chapter.subjectId);
+            document.getElementById('study-subject-name').innerText = subject ? subject.name : 'Subject';
+            document.getElementById('study-chapter-title').innerText = chapter.name;
+            document.getElementById('study-completed-count').innerText = chapter.completed || 0;
+            document.getElementById('study-total-count').innerText = chapter.lectures || 0;
+            document.getElementById('study-hours').value = chapter.hours || 0;
+            document.getElementById('study-minutes').value = chapter.minutes || 0;
+            document.getElementById('study-notes').value = decryptData(chapter.notes || '');
+            updateProgressBarUI(chapter.completed, chapter.lectures);
+            setFocus(chapter.focus || 'Medium');
+            document.getElementById('bottom-nav').style.display = 'none'; document.getElementById('main-header').style.display = 'none';
+            document.getElementById('view-subject-detail').classList.remove('active'); document.getElementById('view-chapter-study').classList.add('active');
+        };
+
+        window.closeChapterStudy = () => {
+            document.getElementById('view-chapter-study').classList.remove('active'); document.getElementById('view-subject-detail').classList.add('active');
+            document.getElementById('bottom-nav').style.display = 'block'; document.getElementById('main-header').style.display = 'block';
+            renderChaptersList(); 
+        };
+
+        window.updateLectureProgress = (val) => {
+            let current = parseInt(document.getElementById('study-completed-count').innerText);
+            let total = parseInt(document.getElementById('study-total-count').innerText);
+            current += val; if(current < 0) current = 0; if(current > total) current = total;
+            document.getElementById('study-completed-count').innerText = current;
+            updateProgressBarUI(current, total);
+        };
+
+        function updateProgressBarUI(current, total) { document.getElementById('study-progress-bar').style.width = `${total > 0 ? (current / total) * 100 : 0}%`; }
+
+        window.setFocus = (level) => {
+            currentStudyChapter.focus = level;
+            ['Low', 'Medium', 'High'].forEach(l => {
+                const btn = document.getElementById(`focus-${l}`);
+                if (l === level) { btn.classList.add('bg-white', 'dark:bg-gray-800', 'text-black', 'dark:text-white', 'shadow-sm'); btn.classList.remove('text-gray-500'); } 
+                else { btn.classList.remove('bg-white', 'dark:bg-gray-800', 'text-black', 'dark:text-white', 'shadow-sm'); btn.classList.add('text-gray-500'); }
+            });
+        };
+
+        window.handleForgotPassword = () => {
+            document.getElementById('modal-input-title').innerText = "Reset Password"; document.getElementById('modal-input-desc').innerText = "Enter your email to receive a reset link.";
+            document.getElementById('modal-input-field').type = "email"; document.getElementById('modal-input-field').placeholder = "name@example.com";
+            document.getElementById('modal-input-action').onclick = async () => {
+                const email = document.getElementById('modal-input-field').value; if(!email) return showToast('Enter an email', 'error');
+                try { await sendPasswordResetEmail(auth, email); showToast('Reset email sent!'); closeModal('modal-input'); } catch (e) { showToast(e.message, 'error'); }
+            };
+            showModal('modal-input');
+        };
+
+        window.showUpdatePasswordModal = () => {
+            document.getElementById('modal-input-title').innerText = "Update Password"; document.getElementById('modal-input-desc').innerText = "Enter your new password below.";
+            document.getElementById('modal-input-field').type = "password"; document.getElementById('modal-input-field').placeholder = "New Password (min 6 chars)"; document.getElementById('modal-input-field').value = "";
+            document.getElementById('modal-input-action').onclick = async () => {
+                const newPass = document.getElementById('modal-input-field').value; if(!newPass || newPass.length < 6) return showToast('Password too short', 'error');
+                try { await updatePassword(currentUser, newPass); showToast('Password updated!'); closeModal('modal-input'); } catch (e) { showToast('Please re-login to update password.', 'error'); }
+            };
+            showModal('modal-input');
+        };
+
+    </script>
+</body>
+</html>
